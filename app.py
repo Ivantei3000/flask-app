@@ -19,15 +19,32 @@ def page(file_name):
 def create():
     con = sqlite3.connect("My_DB.db")
     cursor = con.cursor()
+    unic_username = True
     if request.method == 'POST':
         username = (request.form['username'])
         password = (request.form['password'])
-        password_hash = generate_password_hash(password)
-        data = (username,password_hash)
-        cursor.execute("INSERT INTO Accaunts (username,password_hash) VALUES (?, ?)", data)
-        con.commit()
- 
-    return render_template('login.html')
+        cursor.execute("SELECT username FROM Accaunts")
+        result = cursor.fetchall()
+        print(result)
+        for i in result:
+            if i[0] == username:
+                unic_username = False
+                print("exist")
+                return render_template('create.html',message="Account is already exist")
+            else:
+                pass
+                
+        if unic_username:
+            print("unic")
+            password_hash = generate_password_hash(password)
+            data = (username,password_hash)
+            cursor.execute("INSERT INTO Accaunts (username,password_hash) VALUES (?, ?)", data)
+            con.commit()
+            unic_username = False
+            return redirect(url_for("login"))
+        
+    
+    return render_template('create.html')
 
 
 
@@ -38,20 +55,15 @@ def login():
     if request.method == 'POST':
         password = request.form.get('password')
         username = request.form.get('username')
-        cursor.execute("SELECT username FROM Accaunts")
         
+        cursor.execute("SELECT username FROM Accaunts")
     for i in cursor:
-        print(i)
-        K = (username,)
-        print(K)
-        if K == i:
-            print(1.0)
+        if i[0] == username:
             cursor.execute("SELECT password_hash FROM Accaunts")
             for i in cursor:
-                print(i)
-                check_password_hash(i, password)
-                if check_password_hash == True:
-                    print('BB')
+                if check_password_hash(i[0], password):
+                    return make_response("Your username is:{}".format(username))
+                
     return render_template('login.html')
     
     
